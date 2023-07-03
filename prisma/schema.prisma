@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["clientExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ev_charger {
+  id               String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name             String             @db.VarChar(255)
+  ocpp_id          String             @db.VarChar(255)
+  organization_id  String?            @db.Uuid
+  created_at       DateTime           @default(now()) @db.Timestamp(6)
+  updated_at       DateTime           @default(now()) @db.Timestamp(6)
+  organization     organization?      @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usage_statistics usage_statistics[]
+}
+
+model organization {
+  id          String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  description String?      @db.VarChar(255)
+  image       String?      @db.VarChar(255)
+  name        String       @db.VarChar(255)
+  created_at  DateTime     @default(now()) @db.Timestamp(6)
+  updated_at  DateTime     @default(now()) @db.Timestamp(6)
+  user_id     String       @db.Uuid
+  tenant_id   String       @db.VarChar(255)
+  ev_charger  ev_charger[]
+  user        user         @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model usage_statistics {
+  id            String      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  uptime        Int
+  load_curve    Int
+  other_metrics String      @db.VarChar(255)
+  ev_charger_id String?     @db.Uuid
+  created_at    DateTime    @default(now()) @db.Timestamp(6)
+  updated_at    DateTime    @default(now()) @db.Timestamp(6)
+  ev_charger    ev_charger? @relation(fields: [ev_charger_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model user {
+  id           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email        String         @unique @db.VarChar(255)
+  firstName    String?        @db.VarChar(255)
+  lastName     String?        @db.VarChar(255)
+  roq_user_id  String         @db.VarChar(255)
+  tenant_id    String         @db.VarChar(255)
+  created_at   DateTime       @default(now()) @db.Timestamp(6)
+  updated_at   DateTime       @default(now()) @db.Timestamp(6)
+  organization organization[]
+}
